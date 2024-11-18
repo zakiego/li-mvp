@@ -14,7 +14,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-	title: "Kuis Carbon Footprint - Lapor Iklim",
+	title: "Carbon Footprint Calculator - Lapor Iklim",
 	description:
 		"Hitung jejak karbon Anda dan pelajari dampak aktivitas sehari-hari terhadap lingkungan. Dapatkan rekomendasi personal untuk mengurangi emisi karbon dan berkontribusi pada pelestarian lingkungan.",
 };

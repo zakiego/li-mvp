@@ -420,15 +420,16 @@ export default function CarbonFootprintCalculator() {
 		<div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center p-4">
 			<Card className="w-full max-w-md">
 				<CardHeader>
-					<div className="flex justify-between items-center">
-						<CardTitle className="text-2xl font-bold text-center text-emerald-700">
+					<div className="flex justify-between items-center gap-2">
+						<CardTitle className="text-xl font-bold text-emerald-700 leading-tight">
 							{translations[language].title}
+							<span className="block text-lg">Lapor Iklim</span>
 						</CardTitle>
 						<Select
 							value={language}
 							onValueChange={(value: Language) => setLanguage(value)}
 						>
-							<SelectTrigger className="w-[70px]">
+							<SelectTrigger className="w-[70px] shrink-0">
 								<SelectValue placeholder="Language" />
 							</SelectTrigger>
 							<SelectContent>
