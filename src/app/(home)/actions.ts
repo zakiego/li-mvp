@@ -19,11 +19,11 @@ export async function calculateCarbonFootprint(
 		- Shopping habits: ${answers[4]}
 
 		Please provide:
-		1. A brief impact assessment (2 sentences)
-		2. 3-4 specific, actionable recommendations to reduce their carbon footprint
+		1. A brief impact assessment (2 sentences). Include relevant emojis and use casual, Gen-Z friendly language.
+		2. 3-4 specific, actionable recommendations to reduce their carbon footprint. Each recommendation should start with an appropriate emoji.
 		Format as JSON with properties: "impact" and "recommendations" (array)
 		
-		Respond in ${language === "id" ? "Indonesian" : "English"} language.
+		Respond in ${language === "id" ? "Indonesian" : "English"} language. Make sure to use plenty of emojis and casual language in both the impact and recommendations.
 	`;
 
 	const { object } = await generateObject({
