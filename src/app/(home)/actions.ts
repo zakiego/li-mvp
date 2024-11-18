@@ -27,7 +27,7 @@ export async function calculateCarbonFootprint(
 	`;
 
 	const { object } = await generateObject({
-		model: openai("gpt-4-turbo"),
+		model: openai("gpt-4o-2024-08-06"),
 		prompt,
 		schema: z.object({
 			impact: z.string(),
