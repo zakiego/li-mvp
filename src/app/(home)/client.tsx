@@ -201,7 +201,7 @@ const translations = {
 const ProgressBar = ({ currentStep, totalSteps }: ProgressBarProps) => (
 	<div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
 		<div
-			className="bg-green-600 h-2.5 rounded-full transition-all duration-500 ease-out"
+			className="bg-emerald-500 h-2.5 rounded-full transition-all duration-500 ease-out"
 			style={{
 				width: `${(Math.min(currentStep, totalSteps - 1) / (totalSteps - 1)) * 100}%`,
 			}}
@@ -287,22 +287,27 @@ const Results = ({ name, answers, result, language }: ResultsProps) => {
 
 	return (
 		<div className="space-y-6">
-			<CardTitle className="text-2xl font-bold">{t.title}</CardTitle>
+			<CardTitle className="text-2xl font-bold text-emerald-800">
+				{t.title}
+			</CardTitle>
 			<div className="space-y-4">
 				<CardDescription>
-					<strong>{t.name}:</strong> {name}
+					<strong className="text-emerald-700">{t.name}:</strong> {name}
 				</CardDescription>
 				<CardDescription>
-					<strong>{t.impactScore}:</strong> {result.score} (out of 100)
+					<strong className="text-emerald-700">{t.impactScore}:</strong>{" "}
+					{result.score} (out of 100)
 				</CardDescription>
 				<CardDescription>
-					<strong>{t.summary}:</strong> {result.summary}
+					<strong className="text-emerald-700">{t.summary}:</strong>{" "}
+					{result.summary}
 				</CardDescription>
 				<CardDescription>
-					<strong>{t.environmentalImpact}:</strong> {result.impact}
+					<strong className="text-emerald-700">{t.environmentalImpact}:</strong>{" "}
+					{result.impact}
 				</CardDescription>
 				<CardDescription>
-					<strong>{t.recommendations}:</strong>
+					<strong className="text-emerald-700">{t.recommendations}:</strong>
 					<ul className="list-disc pl-5 mt-2 space-y-1">
 						{result.recommendations.map((rec, index) => (
 							<li key={`rec-${rec}`}>{rec}</li>
@@ -412,11 +417,11 @@ export default function CarbonFootprintCalculator() {
 	};
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+		<div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center p-4">
 			<Card className="w-full max-w-md">
 				<CardHeader>
 					<div className="flex justify-between items-center">
-						<CardTitle className="text-2xl font-bold text-center text-green-700">
+						<CardTitle className="text-2xl font-bold text-center text-emerald-700">
 							{translations[language].title}
 						</CardTitle>
 						<Select
@@ -437,7 +442,7 @@ export default function CarbonFootprintCalculator() {
 					<ProgressBar currentStep={step} totalSteps={questions.length + 2} />
 					{isLoading ? (
 						<div className="flex justify-center items-center py-8">
-							<Loader2 className="h-8 w-8 animate-spin text-green-600" />
+							<Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
 							<span className="ml-2">{translations[language].calculating}</span>
 						</div>
 					) : (
@@ -481,7 +486,7 @@ export default function CarbonFootprintCalculator() {
 					)}
 					{step === 0 && (
 						<Button
-							className="ml-auto"
+							className="ml-auto bg-emerald-600 hover:bg-emerald-700"
 							onClick={() => setStep(step + 1)}
 							disabled={!name}
 						>
@@ -489,7 +494,10 @@ export default function CarbonFootprintCalculator() {
 						</Button>
 					)}
 					{step === questions.length && (
-						<Button className="ml-auto" onClick={calculateResult}>
+						<Button
+							className="ml-auto bg-emerald-600 hover:bg-emerald-700"
+							onClick={calculateResult}
+						>
 							{translations[language].seeResults}
 						</Button>
 					)}
