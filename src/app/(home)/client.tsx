@@ -12,8 +12,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Facebook, Linkedin, Share2, Twitter } from "lucide-react";
+import { Facebook, Linkedin, Loader2, Share2, Twitter } from "lucide-react";
 import { useState } from "react";
+import { calculateCarbonFootprint } from "./actions";
 
 interface ProgressBarProps {
 	currentStep: number;
@@ -175,6 +176,7 @@ export default function CarbonFootprintCalculator() {
 	const [name, setName] = useState("");
 	const [answers, setAnswers] = useState<Record<number, string>>({});
 	const [result, setResult] = useState<Result | null>(null);
+	const [isLoading, setIsLoading] = useState(false);
 
 	const questions: Question[] = [
 		{
@@ -227,66 +229,85 @@ export default function CarbonFootprintCalculator() {
 	const handleAnswer = (answer: string) => {
 		setAnswers({ ...answers, [step - 1]: answer });
 		if (step === questions.length) {
-			calculateResult();
+			void calculateResult();
 		}
 		setStep(step + 1);
 	};
 
-	const calculateResult = () => {
-		// This is a simplified calculation. In a real app, you'd have more complex logic.
-		const scores = {
-			transportation: { never: 3, occasionally: 2, regularly: 1, always: 0 },
-			mode: { car: 3, bicycle: 0, walking: 0, public: 1 },
-			meat: { daily: 3, weekly: 2, occasionally: 1, never: 0 },
-			energy: { none: 3, efficient: 2, renewable: 1, minimal: 0 },
-			shopping: { weekly: 3, monthly: 2, yearly: 1, rarely: 0 },
-		} as const;
+	const calculateResult = async () => {
+		setIsLoading(true);
+		let normalizedScore = 0;
+		try {
+			// This is a simplified calculation. In a real app, you'd have more complex logic.
+			const scores = {
+				transportation: { never: 3, occasionally: 2, regularly: 1, always: 0 },
+				mode: { car: 3, bicycle: 0, walking: 0, public: 1 },
+				meat: { daily: 3, weekly: 2, occasionally: 1, never: 0 },
+				energy: { none: 3, efficient: 2, renewable: 1, minimal: 0 },
+				shopping: { weekly: 3, monthly: 2, yearly: 1, rarely: 0 },
+			} as const;
 
-		const scoreCategories = Object.keys(scores) as Array<keyof typeof scores>;
-		const score = Object.values(answers).reduce((total, answer, index) => {
-			const category = scoreCategories[index];
-			return (
-				total +
-				scores[category][answer as keyof (typeof scores)[typeof category]]
+			const scoreCategories = Object.keys(scores) as Array<keyof typeof scores>;
+			const score = Object.values(answers).reduce((total, answer, index) => {
+				const category = scoreCategories[index];
+				return (
+					total +
+					scores[category][answer as keyof (typeof scores)[typeof category]]
+				);
+			}, 0);
+
+			normalizedScore = Math.round((score / 15) * 100); // 15 is max possible score
+
+			const aiResponse = await calculateCarbonFootprint(
+				normalizedScore,
+				answers,
 			);
-		}, 0);
 
-		const normalizedScore = Math.round((score / 15) * 100); // 15 is max possible score
+			setResult({
+				score: normalizedScore,
+				summary: `Based on your answers, your carbon footprint score is ${normalizedScore} out of 100.`,
+				impact: aiResponse.impact,
+				recommendations: aiResponse.recommendations,
+			});
+		} catch (error) {
+			// Fallback to existing static recommendations if AI fails
+			let impact: string;
+			let recommendations: string[];
 
-		let impact: string;
-		let recommendations: string[];
+			if (normalizedScore < 30) {
+				impact = "Your carbon footprint is relatively low. Great job!";
+				recommendations = [
+					"Consider using even more renewable energy sources",
+					"Encourage others to adopt your eco-friendly habits",
+				];
+			} else if (normalizedScore < 60) {
+				impact =
+					"Your carbon footprint is moderate. There's room for improvement.";
+				recommendations = [
+					"Try to use public transportation more often",
+					"Reduce meat consumption",
+					"Opt for energy-efficient appliances",
+				];
+			} else {
+				impact =
+					"Your carbon footprint is high. Significant changes could make a big difference.";
+				recommendations = [
+					"Prioritize walking, cycling, or public transport over driving",
+					"Reduce meat consumption and opt for plant-based meals more often",
+					"Implement energy-saving measures at home",
+					"Practice mindful consumption and reduce unnecessary purchases",
+				];
+			}
 
-		if (normalizedScore < 30) {
-			impact = "Your carbon footprint is relatively low. Great job!";
-			recommendations = [
-				"Consider using even more renewable energy sources",
-				"Encourage others to adopt your eco-friendly habits",
-			];
-		} else if (normalizedScore < 60) {
-			impact =
-				"Your carbon footprint is moderate. There's room for improvement.";
-			recommendations = [
-				"Try to use public transportation more often",
-				"Reduce meat consumption",
-				"Opt for energy-efficient appliances",
-			];
-		} else {
-			impact =
-				"Your carbon footprint is high. Significant changes could make a big difference.";
-			recommendations = [
-				"Prioritize walking, cycling, or public transport over driving",
-				"Reduce meat consumption and opt for plant-based meals more often",
-				"Implement energy-saving measures at home",
-				"Practice mindful consumption and reduce unnecessary purchases",
-			];
+			setResult({
+				score: normalizedScore,
+				summary: `Based on your answers, your carbon footprint score is ${normalizedScore} out of 100.`,
+				impact,
+				recommendations,
+			});
+		} finally {
+			setIsLoading(false);
 		}
-
-		setResult({
-			score: normalizedScore,
-			summary: `Based on your answers, your carbon footprint score is ${normalizedScore} out of 100.`,
-			impact,
-			recommendations,
-		});
 	};
 
 	return (
@@ -299,28 +320,37 @@ export default function CarbonFootprintCalculator() {
 				</CardHeader>
 				<CardContent>
 					<ProgressBar currentStep={step} totalSteps={questions.length + 2} />
-					{step === 0 && (
-						<div className="space-y-4">
-							<CardDescription>
-								Let's start by getting your name:
-							</CardDescription>
-							<Input
-								type="text"
-								placeholder="Enter your name"
-								value={name}
-								onChange={(e) => setName(e.target.value)}
-							/>
+					{isLoading ? (
+						<div className="flex justify-center items-center py-8">
+							<Loader2 className="h-8 w-8 animate-spin text-green-600" />
+							<span className="ml-2">Calculating your results...</span>
 						</div>
-					)}
-					{step > 0 && step <= questions.length && (
-						<Question
-							question={questions[step - 1].question}
-							options={questions[step - 1].options}
-							onChange={handleAnswer}
-						/>
-					)}
-					{step === questions.length + 1 && result && (
-						<Results name={name} answers={answers} result={result} />
+					) : (
+						<>
+							{step === 0 && (
+								<div className="space-y-4">
+									<CardDescription>
+										Let's start by getting your name:
+									</CardDescription>
+									<Input
+										type="text"
+										placeholder="Enter your name"
+										value={name}
+										onChange={(e) => setName(e.target.value)}
+									/>
+								</div>
+							)}
+							{step > 0 && step <= questions.length && (
+								<Question
+									question={questions[step - 1].question}
+									options={questions[step - 1].options}
+									onChange={handleAnswer}
+								/>
+							)}
+							{step === questions.length + 1 && result && (
+								<Results name={name} answers={answers} result={result} />
+							)}
+						</>
 					)}
 				</CardContent>
 				<CardFooter className="flex justify-between">
