@@ -457,6 +457,8 @@ export default function CarbonFootprintCalculator() {
 										placeholder={translations[language].namePlaceholder}
 										value={name}
 										onChange={(e) => setName(e.target.value)}
+										autoComplete="off"
+										data-1p-ignore
 									/>
 								</div>
 							)}
