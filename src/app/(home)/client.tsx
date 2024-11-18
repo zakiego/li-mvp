@@ -15,8 +15,46 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Facebook, Linkedin, Share2, Twitter } from "lucide-react";
 import { useState } from "react";
 
+interface ProgressBarProps {
+	currentStep: number;
+	totalSteps: number;
+}
+
+interface QuestionOption {
+	label: string;
+	value: string;
+}
+
+interface QuestionProps {
+	question: string;
+	options: QuestionOption[];
+	onChange: (value: string) => void;
+}
+
+interface Result {
+	score: number;
+	summary: string;
+	impact: string;
+	recommendations: string[];
+}
+
+interface ShareButtonsProps {
+	result: Result;
+}
+
+interface ResultsProps {
+	name: string;
+	answers: Record<number, string>;
+	result: Result;
+}
+
+interface Question {
+	question: string;
+	options: QuestionOption[];
+}
+
 // Progress Bar Component
-const ProgressBar = ({ currentStep, totalSteps }) => (
+const ProgressBar = ({ currentStep, totalSteps }: ProgressBarProps) => (
 	<div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
 		<div
 			className="bg-green-600 h-2.5 rounded-full transition-all duration-500 ease-out"
@@ -28,11 +66,14 @@ const ProgressBar = ({ currentStep, totalSteps }) => (
 );
 
 // Question Component
-const Question = ({ question, options, onChange }) => (
+const Question = ({ question, options, onChange }: QuestionProps) => (
 	<RadioGroup onValueChange={onChange} className="space-y-2">
 		<CardDescription className="mb-4">{question}</CardDescription>
 		{options.map((option, index) => (
-			<div key={index} className="flex items-center space-x-2">
+			<div
+				key={`${option.value}-${index}`}
+				className="flex items-center space-x-2"
+			>
 				<RadioGroupItem value={option.value} id={`option-${index}`} />
 				<Label htmlFor={`option-${index}`}>{option.label}</Label>
 			</div>
@@ -41,7 +82,7 @@ const Question = ({ question, options, onChange }) => (
 );
 
 // Share Buttons Component
-const ShareButtons = ({ result }) => {
+const ShareButtons = ({ result }: ShareButtonsProps) => {
 	const shareUrl = encodeURIComponent(window.location.href);
 	const shareText = encodeURIComponent(
 		`I just calculated my carbon footprint! My impact score is ${result.score}. Check yours too!`,
@@ -97,7 +138,7 @@ const ShareButtons = ({ result }) => {
 };
 
 // Results Component
-const Results = ({ name, answers, result }) => (
+const Results = ({ name, answers, result }: ResultsProps) => (
 	<div className="space-y-6">
 		<CardTitle className="text-2xl font-bold">
 			Your Carbon Footprint Results
@@ -119,7 +160,7 @@ const Results = ({ name, answers, result }) => (
 				<strong>Recommendations:</strong>
 				<ul className="list-disc pl-5 mt-2 space-y-1">
 					{result.recommendations.map((rec, index) => (
-						<li key={index}>{rec}</li>
+						<li key={`rec-${rec}`}>{rec}</li>
 					))}
 				</ul>
 			</CardDescription>
@@ -132,10 +173,10 @@ const Results = ({ name, answers, result }) => (
 export default function CarbonFootprintCalculator() {
 	const [step, setStep] = useState(0);
 	const [name, setName] = useState("");
-	const [answers, setAnswers] = useState({});
-	const [result, setResult] = useState(null);
+	const [answers, setAnswers] = useState<Record<number, string>>({});
+	const [result, setResult] = useState<Result | null>(null);
 
-	const questions = [
+	const questions: Question[] = [
 		{
 			question: "How often do you use public transportation?",
 			options: [
@@ -183,7 +224,7 @@ export default function CarbonFootprintCalculator() {
 		},
 	];
 
-	const handleAnswer = (answer) => {
+	const handleAnswer = (answer: string) => {
 		setAnswers({ ...answers, [step - 1]: answer });
 		if (step === questions.length) {
 			calculateResult();
@@ -199,15 +240,21 @@ export default function CarbonFootprintCalculator() {
 			meat: { daily: 3, weekly: 2, occasionally: 1, never: 0 },
 			energy: { none: 3, efficient: 2, renewable: 1, minimal: 0 },
 			shopping: { weekly: 3, monthly: 2, yearly: 1, rarely: 0 },
-		};
+		} as const;
 
+		const scoreCategories = Object.keys(scores) as Array<keyof typeof scores>;
 		const score = Object.values(answers).reduce((total, answer, index) => {
-			return total + scores[Object.keys(scores)[index]][answer];
+			const category = scoreCategories[index];
+			return (
+				total +
+				scores[category][answer as keyof (typeof scores)[typeof category]]
+			);
 		}, 0);
 
 		const normalizedScore = Math.round((score / 15) * 100); // 15 is max possible score
 
-		let impact, recommendations;
+		let impact: string;
+		let recommendations: string[];
 
 		if (normalizedScore < 30) {
 			impact = "Your carbon footprint is relatively low. Great job!";
