@@ -7,6 +7,7 @@ import { z } from "zod";
 export async function calculateCarbonFootprint(
 	score: number,
 	answers: Record<number, string>,
+	language: "en" | "id",
 ) {
 	const prompt = `
 		Based on a carbon footprint assessment:
@@ -21,6 +22,8 @@ export async function calculateCarbonFootprint(
 		1. A brief impact assessment (2 sentences)
 		2. 3-4 specific, actionable recommendations to reduce their carbon footprint
 		Format as JSON with properties: "impact" and "recommendations" (array)
+		
+		Respond in ${language === "id" ? "Indonesian" : "English"} language.
 	`;
 
 	const { object } = await generateObject({

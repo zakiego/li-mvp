@@ -12,6 +12,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { Facebook, Linkedin, Loader2, Share2, Twitter } from "lucide-react";
 import { useState } from "react";
 import { calculateCarbonFootprint } from "./actions";
@@ -47,12 +54,148 @@ interface ResultsProps {
 	name: string;
 	answers: Record<number, string>;
 	result: Result;
+	language: Language;
 }
 
 interface Question {
 	question: string;
 	options: QuestionOption[];
 }
+
+// Add language type and translations
+type Language = "en" | "id";
+
+const translations = {
+	en: {
+		title: "Carbon Footprint Calculator",
+		namePrompt: "Let's start by getting your name:",
+		namePlaceholder: "Enter your name",
+		previous: "Previous",
+		next: "Next",
+		seeResults: "See Results",
+		calculating: "Calculating your results...",
+		results: {
+			title: "Your Carbon Footprint Results",
+			name: "Name",
+			impactScore: "Impact Score",
+			summary: "Summary",
+			environmentalImpact: "Environmental Impact",
+			recommendations: "Recommendations",
+		},
+		questions: [
+			{
+				question: "How often do you use public transportation?",
+				options: [
+					{ label: "Never", value: "never" },
+					{ label: "Occasionally", value: "occasionally" },
+					{ label: "Regularly", value: "regularly" },
+					{ label: "Always", value: "always" },
+				],
+			},
+			{
+				question: "What's your primary mode of transportation?",
+				options: [
+					{ label: "Car", value: "car" },
+					{ label: "Bicycle", value: "bicycle" },
+					{ label: "Walking", value: "walking" },
+					{ label: "Public Transport", value: "public" },
+				],
+			},
+			{
+				question: "How often do you eat meat?",
+				options: [
+					{ label: "Daily", value: "daily" },
+					{ label: "Few times a week", value: "weekly" },
+					{ label: "Occasionally", value: "occasionally" },
+					{ label: "Never (Vegetarian/Vegan)", value: "never" },
+				],
+			},
+			{
+				question: "How do you manage your home energy usage?",
+				options: [
+					{ label: "No special measures", value: "none" },
+					{ label: "Use energy-efficient appliances", value: "efficient" },
+					{ label: "Use renewable energy sources", value: "renewable" },
+					{ label: "Minimal energy usage", value: "minimal" },
+				],
+			},
+			{
+				question: "How often do you purchase new clothes or electronics?",
+				options: [
+					{ label: "Weekly", value: "weekly" },
+					{ label: "Monthly", value: "monthly" },
+					{ label: "Few times a year", value: "yearly" },
+					{ label: "Rarely", value: "rarely" },
+				],
+			},
+		],
+	},
+	id: {
+		title: "Kalkulator Jejak Karbon",
+		namePrompt: "Mari mulai dengan nama Anda:",
+		namePlaceholder: "Masukkan nama Anda",
+		previous: "Sebelumnya",
+		next: "Selanjutnya",
+		seeResults: "Lihat Hasil",
+		calculating: "Menghitung hasil Anda...",
+		results: {
+			title: "Hasil Jejak Karbon Anda",
+			name: "Nama",
+			impactScore: "Skor Dampak",
+			summary: "Ringkasan",
+			environmentalImpact: "Dampak Lingkungan",
+			recommendations: "Rekomendasi",
+		},
+		questions: [
+			{
+				question: "Seberapa sering Anda menggunakan transportasi umum?",
+				options: [
+					{ label: "Tidak Pernah", value: "never" },
+					{ label: "Kadang-kadang", value: "occasionally" },
+					{ label: "Secara Teratur", value: "regularly" },
+					{ label: "Selalu", value: "always" },
+				],
+			},
+			{
+				question: "Apa moda transportasi utama Anda?",
+				options: [
+					{ label: "Mobil", value: "car" },
+					{ label: "Sepeda", value: "bicycle" },
+					{ label: "Berjalan", value: "walking" },
+					{ label: "Transport Umum", value: "public" },
+				],
+			},
+			{
+				question: "Seberapa sering Anda makan daging?",
+				options: [
+					{ label: "Harian", value: "daily" },
+					{ label: "Beberapa kali seminggu", value: "weekly" },
+					{ label: "Kadang-kadang", value: "occasionally" },
+					{ label: "Tidak Pernah (Vegetarian/Vegetarian)", value: "never" },
+				],
+			},
+			{
+				question: "Bagaimana Anda mengelola penggunaan energi rumah Anda?",
+				options: [
+					{ label: "Tidak ada tindakan khusus", value: "none" },
+					{ label: "Gunakan peralatan energi-efisien", value: "efficient" },
+					{ label: "Gunakan sumber energi terbarukan", value: "renewable" },
+					{ label: "Penggunaan energi minimal", value: "minimal" },
+				],
+			},
+			{
+				question:
+					"Seberapa sering Anda membeli pakaian atau peralatan elektronik baru?",
+				options: [
+					{ label: "Mingguan", value: "weekly" },
+					{ label: "Bulanan", value: "monthly" },
+					{ label: "Beberapa kali setahun", value: "yearly" },
+					{ label: "Jarang", value: "rarely" },
+				],
+			},
+		],
+	},
+};
 
 // Progress Bar Component
 const ProgressBar = ({ currentStep, totalSteps }: ProgressBarProps) => (
@@ -139,36 +282,38 @@ const ShareButtons = ({ result }: ShareButtonsProps) => {
 };
 
 // Results Component
-const Results = ({ name, answers, result }: ResultsProps) => (
-	<div className="space-y-6">
-		<CardTitle className="text-2xl font-bold">
-			Your Carbon Footprint Results
-		</CardTitle>
-		<div className="space-y-4">
-			<CardDescription>
-				<strong>Name:</strong> {name}
-			</CardDescription>
-			<CardDescription>
-				<strong>Impact Score:</strong> {result.score} (out of 100)
-			</CardDescription>
-			<CardDescription>
-				<strong>Summary:</strong> {result.summary}
-			</CardDescription>
-			<CardDescription>
-				<strong>Environmental Impact:</strong> {result.impact}
-			</CardDescription>
-			<CardDescription>
-				<strong>Recommendations:</strong>
-				<ul className="list-disc pl-5 mt-2 space-y-1">
-					{result.recommendations.map((rec, index) => (
-						<li key={`rec-${rec}`}>{rec}</li>
-					))}
-				</ul>
-			</CardDescription>
+const Results = ({ name, answers, result, language }: ResultsProps) => {
+	const t = translations[language].results;
+
+	return (
+		<div className="space-y-6">
+			<CardTitle className="text-2xl font-bold">{t.title}</CardTitle>
+			<div className="space-y-4">
+				<CardDescription>
+					<strong>{t.name}:</strong> {name}
+				</CardDescription>
+				<CardDescription>
+					<strong>{t.impactScore}:</strong> {result.score} (out of 100)
+				</CardDescription>
+				<CardDescription>
+					<strong>{t.summary}:</strong> {result.summary}
+				</CardDescription>
+				<CardDescription>
+					<strong>{t.environmentalImpact}:</strong> {result.impact}
+				</CardDescription>
+				<CardDescription>
+					<strong>{t.recommendations}:</strong>
+					<ul className="list-disc pl-5 mt-2 space-y-1">
+						{result.recommendations.map((rec, index) => (
+							<li key={`rec-${rec}`}>{rec}</li>
+						))}
+					</ul>
+				</CardDescription>
+			</div>
+			<ShareButtons result={result} />
 		</div>
-		<ShareButtons result={result} />
-	</div>
-);
+	);
+};
 
 // Main Component
 export default function CarbonFootprintCalculator() {
@@ -177,54 +322,9 @@ export default function CarbonFootprintCalculator() {
 	const [answers, setAnswers] = useState<Record<number, string>>({});
 	const [result, setResult] = useState<Result | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
+	const [language, setLanguage] = useState<Language>("en");
 
-	const questions: Question[] = [
-		{
-			question: "How often do you use public transportation?",
-			options: [
-				{ label: "Never", value: "never" },
-				{ label: "Occasionally", value: "occasionally" },
-				{ label: "Regularly", value: "regularly" },
-				{ label: "Always", value: "always" },
-			],
-		},
-		{
-			question: "What's your primary mode of transportation?",
-			options: [
-				{ label: "Car", value: "car" },
-				{ label: "Bicycle", value: "bicycle" },
-				{ label: "Walking", value: "walking" },
-				{ label: "Public Transport", value: "public" },
-			],
-		},
-		{
-			question: "How often do you eat meat?",
-			options: [
-				{ label: "Daily", value: "daily" },
-				{ label: "Few times a week", value: "weekly" },
-				{ label: "Occasionally", value: "occasionally" },
-				{ label: "Never (Vegetarian/Vegan)", value: "never" },
-			],
-		},
-		{
-			question: "How do you manage your home energy usage?",
-			options: [
-				{ label: "No special measures", value: "none" },
-				{ label: "Use energy-efficient appliances", value: "efficient" },
-				{ label: "Use renewable energy sources", value: "renewable" },
-				{ label: "Minimal energy usage", value: "minimal" },
-			],
-		},
-		{
-			question: "How often do you purchase new clothes or electronics?",
-			options: [
-				{ label: "Weekly", value: "weekly" },
-				{ label: "Monthly", value: "monthly" },
-				{ label: "Few times a year", value: "yearly" },
-				{ label: "Rarely", value: "rarely" },
-			],
-		},
-	];
+	const questions: Question[] = translations[language].questions;
 
 	const handleAnswer = (answer: string) => {
 		setAnswers({ ...answers, [step - 1]: answer });
@@ -261,6 +361,7 @@ export default function CarbonFootprintCalculator() {
 			const aiResponse = await calculateCarbonFootprint(
 				normalizedScore,
 				answers,
+				language,
 			);
 
 			setResult({
@@ -314,27 +415,41 @@ export default function CarbonFootprintCalculator() {
 		<div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
 			<Card className="w-full max-w-md">
 				<CardHeader>
-					<CardTitle className="text-2xl font-bold text-center text-green-700">
-						Carbon Footprint Calculator
-					</CardTitle>
+					<div className="flex justify-between items-center">
+						<CardTitle className="text-2xl font-bold text-center text-green-700">
+							{translations[language].title}
+						</CardTitle>
+						<Select
+							value={language}
+							onValueChange={(value: Language) => setLanguage(value)}
+						>
+							<SelectTrigger className="w-[70px]">
+								<SelectValue placeholder="Language" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="en">EN</SelectItem>
+								<SelectItem value="id">ID</SelectItem>
+							</SelectContent>
+						</Select>
+					</div>
 				</CardHeader>
 				<CardContent>
 					<ProgressBar currentStep={step} totalSteps={questions.length + 2} />
 					{isLoading ? (
 						<div className="flex justify-center items-center py-8">
 							<Loader2 className="h-8 w-8 animate-spin text-green-600" />
-							<span className="ml-2">Calculating your results...</span>
+							<span className="ml-2">{translations[language].calculating}</span>
 						</div>
 					) : (
 						<>
 							{step === 0 && (
 								<div className="space-y-4">
 									<CardDescription>
-										Let's start by getting your name:
+										{translations[language].namePrompt}
 									</CardDescription>
 									<Input
 										type="text"
-										placeholder="Enter your name"
+										placeholder={translations[language].namePlaceholder}
 										value={name}
 										onChange={(e) => setName(e.target.value)}
 									/>
@@ -348,7 +463,12 @@ export default function CarbonFootprintCalculator() {
 								/>
 							)}
 							{step === questions.length + 1 && result && (
-								<Results name={name} answers={answers} result={result} />
+								<Results
+									name={name}
+									answers={answers}
+									result={result}
+									language={language}
+								/>
 							)}
 						</>
 					)}
@@ -356,7 +476,7 @@ export default function CarbonFootprintCalculator() {
 				<CardFooter className="flex justify-between">
 					{step > 0 && step <= questions.length && (
 						<Button variant="outline" onClick={() => setStep(step - 1)}>
-							Previous
+							{translations[language].previous}
 						</Button>
 					)}
 					{step === 0 && (
@@ -365,12 +485,12 @@ export default function CarbonFootprintCalculator() {
 							onClick={() => setStep(step + 1)}
 							disabled={!name}
 						>
-							Next
+							{translations[language].next}
 						</Button>
 					)}
 					{step === questions.length && (
 						<Button className="ml-auto" onClick={calculateResult}>
-							See Results
+							{translations[language].seeResults}
 						</Button>
 					)}
 				</CardFooter>
